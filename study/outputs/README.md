@@ -110,3 +110,25 @@ visuals/
 training_figures/
 = "실제 학습하면서 값은 어떻게 변했는가?"
 ```
+
+
+## Full-training experiment outputs
+
+```text
+outputs/checkpoints/
+├── tiny_transformer_best.pt
+└── tiny_transformer_final.pt
+
+outputs/csv/
+├── full_training_history.csv
+└── trained_model_evaluation.csv
+
+outputs/training_figures/
+├── 12_trained_gt_probability_before_after.png
+├── 13_trained_cross_attention_before_after.png
+├── 14_trained_embedding_before_after_pca3d.png
+└── 15_full_training_curves.png
+```
+
+`tiny_transformer_best.pt`는 test가 아니라 validation loss로 선택됩니다.
+test split은 `07_evaluate_trained_model.py`에서 마지막 성능 확인에 사용합니다.
