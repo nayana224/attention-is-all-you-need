@@ -41,7 +41,7 @@ x = torch.tensor([
     [0.3, 0.2, 1.0],
 ], dtype=torch.float32)
 
-# 개념 시각화를 위해 해석하기 쉬운 projection을 사용한다.
+# 개념 시각화를 위해 해석하기 쉬운 투영을 사용한다.
 W_Q = torch.eye(3)
 W_K = torch.eye(3)
 
