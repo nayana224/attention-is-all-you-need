@@ -120,11 +120,11 @@ print(target_tokens)
 # ==================================================
 # 3. Source 입력 흐름
 #
-# English source
-# -> tokenize
+# 영어 Source
+# -> 토큰화
 # -> + <EOS>
-# -> vocabulary lookup
-# -> Encoder Input IDs
+# -> 어휘 사전에서 ID 조회
+# -> Encoder 입력 ID
 # ==================================================
 
 (
@@ -163,12 +163,12 @@ print(
 # ==================================================
 # 4. Target 입력과 정답 흐름
 #
-# Korean target에서 두 갈래가 만들어진다.
+# 한국어 Target에서는 두 갈래가 만들어진다.
 #
-# A) Decoder Input
+# A) Decoder 입력
 #    <SOS> + target
 #
-# B) Ground Truth
+# B) 정답
 #    target + <EOS>
 # ==================================================
 
