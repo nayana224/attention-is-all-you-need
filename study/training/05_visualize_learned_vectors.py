@@ -853,7 +853,8 @@ qk_vectors = torch.cat(
 )
 
 qk_projected = pca_project_to_3d(
-    qk_vectors
+    qk_vectors,
+    center=False,
 )
 
 projected_Q = qk_projected[
