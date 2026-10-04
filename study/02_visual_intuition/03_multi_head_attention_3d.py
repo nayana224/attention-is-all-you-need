@@ -36,7 +36,7 @@ token_colors = {
 origin = torch.zeros(3)
 query_index = 1
 
-# 설명을 위한 toy projected vectors.
+# 설명을 위한 간단한 투영 벡터를 사용한다.
 # 실제 학습 결과는 05_experiments/03_visualize_learned_vectors.py에서 본다.
 Q1 = torch.tensor([
     [0.2, 0.0, 0.1],
