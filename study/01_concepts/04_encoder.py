@@ -20,10 +20,10 @@ torch.manual_seed(42)
 # 이전 단계와 동일한 x
 #
 # row 0 = I
-# row 1 = love
-# row 2 = robotics
+# 행 1 = love
+# 행 2 = robotics
 #
-# shape:
+# 텐서 크기:
 # [seq_len, d_model]
 # = [3, 4]
 # ==================================================
@@ -216,7 +216,7 @@ class MultiHeadSelfAttention(nn.Module):
 #
 # x
 # ↓
-# Multi-Head Self-Attention
+# 멀티헤드 셀프 어텐션
 # ↓
 # x + attention_output
 # ↓
@@ -224,7 +224,7 @@ class MultiHeadSelfAttention(nn.Module):
 # ↓
 # FFN
 # ↓
-# + residual
+# + residual connection
 # ↓
 # LayerNorm
 # ==================================================
@@ -275,7 +275,7 @@ class EncoderLayer(nn.Module):
     def forward(self, x):
 
         # ------------------------------------------
-        # 1) Multi-Head Self-Attention
+        # 1) 멀티헤드 셀프 어텐션
         # ------------------------------------------
 
         (
@@ -286,14 +286,14 @@ class EncoderLayer(nn.Module):
 
 
         # ------------------------------------------
-        # 2) First Residual Connection
+        # 2) 첫 번째 Residual Connection
         # ------------------------------------------
         #
         # x
         # +
         # MultiHeadAttention(x)
         #
-        # shape:
+        # 텐서 크기:
         #
         # [3,4] + [3,4]
         # =
@@ -306,7 +306,7 @@ class EncoderLayer(nn.Module):
 
 
         # ------------------------------------------
-        # 3) First LayerNorm
+        # 3) 첫 번째 LayerNorm
         # ------------------------------------------
 
         x1 = self.norm1(
@@ -318,7 +318,7 @@ class EncoderLayer(nn.Module):
         # 4) Feed-Forward Network
         # ------------------------------------------
         #
-        # 각 token에 독립적으로:
+        # 각 토큰에 독립적으로:
         #
         # 4
         # ↓
@@ -334,7 +334,7 @@ class EncoderLayer(nn.Module):
 
 
         # ------------------------------------------
-        # 5) Second Residual Connection
+        # 5) 두 번째 Residual Connection
         # ------------------------------------------
 
         residual2 = (
@@ -343,7 +343,7 @@ class EncoderLayer(nn.Module):
 
 
         # ------------------------------------------
-        # 6) Second LayerNorm
+        # 6) 두 번째 LayerNorm
         # ------------------------------------------
 
         output = self.norm2(
@@ -474,7 +474,7 @@ class Encoder(nn.Module):
             )
 
 
-            # 다음 Encoder Layer의 input
+            # 다음 Encoder Layer의 입력
             x = result["output"]
 
 
@@ -505,7 +505,7 @@ encoder = Encoder(
 # ==================================================
 #
 # 03에서 하던 것처럼
-# 실제 parameter도 확인한다.
+# 실제 파라미터도 확인한다.
 # ==================================================
 
 first_layer = encoder.layers[0]
@@ -565,7 +565,7 @@ print(
 
 
 # ==================================================
-# 8. FFN Weight Shape 확인
+# 8. FFN Weight 크기 확인
 # ==================================================
 
 print("\n======================================")
