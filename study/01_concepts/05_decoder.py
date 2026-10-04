@@ -45,11 +45,11 @@ print("num_layers:", num_layers)
 # 실제로는 04_encoder.py의
 # 최종 encoder output이라고 생각한다.
 #
-# source:
+# Source 문장:
 #
 # I / love / robotics
 #
-# shape:
+# 텐서 크기:
 # [source_len, d_model]
 # = [3, 4]
 # ==================================================
@@ -77,18 +77,18 @@ print("shape:", encoder_output.shape)
 #
 # I love robotics
 #
-# Decoder input은 한 칸 shift:
+# Decoder 입력은 한 칸 이동시킨다:
 #
 # <SOS> I love
 #
 # 여기서는 embedding + PE 결과라고 가정하고
-# toy vector를 사용한다.
+# 간단한 예제 벡터를 사용한다.
 #
 # row 0 = <SOS>
 # row 1 = I
 # row 2 = love
 #
-# shape:
+# 텐서 크기:
 # [target_len, d_model]
 # = [3, 4]
 # ==================================================
@@ -112,10 +112,10 @@ print("shape:", decoder_input.shape)
 # 4. Causal Mask
 # ==================================================
 #
-# 미래 token을 보지 못하게 한다.
+# 미래 토큰을 보지 못하게 한다.
 #
 # False = 볼 수 있음
-# True  = mask
+# True  = 마스킹
 #
 #
 #        0      1      2
@@ -233,7 +233,7 @@ class MultiHeadAttention(nn.Module):
 
 
         # ------------------------------------------
-        # scaling
+        # 스케일링
         # ------------------------------------------
 
         scaled_scores = (
@@ -243,14 +243,14 @@ class MultiHeadAttention(nn.Module):
 
 
         # ------------------------------------------
-        # mask
+        # 마스킹
         # ------------------------------------------
         #
-        # 미래 위치 score를 -inf로 만든다.
+        # 미래 위치의 score를 -inf로 만든다.
         #
         # exp(-inf) = 0
         #
-        # 따라서 softmax 후 weight = 0
+        # 따라서 Softmax 후 가중치는 0이 된다.
         # ------------------------------------------
 
         if mask is not None:
@@ -264,7 +264,7 @@ class MultiHeadAttention(nn.Module):
 
 
         # ------------------------------------------
-        # softmax
+        # Softmax
         # ------------------------------------------
 
         attention_weights = F.softmax(
@@ -274,7 +274,7 @@ class MultiHeadAttention(nn.Module):
 
 
         # ------------------------------------------
-        # weighted sum of V
+        # V의 가중합
         # ------------------------------------------
 
         output = (
@@ -306,7 +306,7 @@ class MultiHeadAttention(nn.Module):
         ):
 
             # --------------------------------------
-            # Query
+            # Query 생성
             #
             # query_input에서 생성
             # --------------------------------------
@@ -317,7 +317,7 @@ class MultiHeadAttention(nn.Module):
 
 
             # --------------------------------------
-            # Key / Value
+            # Key / Value 생성
             #
             # key_value_input에서 생성
             # --------------------------------------
@@ -361,7 +361,7 @@ class MultiHeadAttention(nn.Module):
 
 
         # ------------------------------------------
-        # Concat
+        # Head 결과 이어 붙이기
         #
         # [3,2] + [3,2]
         # →
@@ -475,9 +475,9 @@ class DecoderLayer(nn.Module):
         # 1. Masked Self-Attention
         # ==========================================
         #
-        # Q, K, V 모두 decoder x에서 생성
+        # Q, K, V 모두 Decoder 입력에서 생성
         #
-        # 단, 미래 token은 mask
+        # 단, 미래 토큰은 마스킹
         # ==========================================
 
         (
@@ -513,18 +513,18 @@ class DecoderLayer(nn.Module):
         #
         # Q:
         #
-        # decoder representation x1
+        # Decoder 표현 x1
         #
         #
         # K, V:
         #
-        # encoder output
+        # Encoder 출력
         #
         #
-        # causal mask 없음
+        # Causal Mask는 사용하지 않음
         #
-        # decoder의 각 position은
-        # source 전체를 볼 수 있음
+        # Decoder의 각 위치는
+        # Source 전체를 볼 수 있음
         # ==========================================
 
         (
@@ -749,7 +749,7 @@ class Decoder(nn.Module):
             )
 
 
-            # 다음 Decoder Layer input
+            # 다음 Decoder Layer의 입력
             x = result["output"]
 
 
@@ -876,11 +876,11 @@ print(
 # 12. Cross-Attention Weight 확인
 # ==================================================
 #
-# row:
-# decoder target positions
+# 행:
+# Decoder target 위치
 #
-# column:
-# encoder source positions
+# 열:
+# Encoder source 위치
 # ==================================================
 
 cross_weights = (
