@@ -142,7 +142,8 @@ def draw_vector(
     color,
     label=None,
     linewidth=2.6,
-    label_offset=0.04,
+    label_offset=(0.04, 0.04, 0.04),
+    label_box=True,
 ):
     start = start.detach().cpu()
     end = end.detach().cpu()
@@ -173,13 +174,28 @@ def draw_vector(
     )
 
     if label is not None:
+        dx = label_offset[0]
+        dy = label_offset[1]
+        dz = label_offset[2]
+
+        bbox = None
+
+        if label_box:
+            bbox = {
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.72,
+                "pad": 1.2,
+            }
+
         axis.text(
-            end[0].item() + label_offset,
-            end[1].item() + label_offset,
-            end[2].item() + label_offset,
+            end[0].item() + dx,
+            end[1].item() + dy,
+            end[2].item() + dz,
             label,
             color=color,
             fontsize=10,
+            bbox=bbox,
         )
 
 
