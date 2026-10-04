@@ -16,7 +16,7 @@ outputs/
 
 ## 1. Concept Visualizations
 
-`study/visuals/`의 코드를 실행하면 `outputs/visuals/`에 저장됩니다.
+`study/02_visual_intuition/`의 코드를 실행하면 `outputs/visuals/`에 저장됩니다.
 
 예:
 
@@ -32,7 +32,7 @@ outputs/
 
 ## 2. Training Trace CSV
 
-`study/training/03_training_trace.py`를 실행하면
+`study/05_experiments/01_training_trace.py`를 실행하면
 실제 EN-KO toy training 과정의 값을 `outputs/csv/`에 저장합니다.
 
 학습은 40개의 train pair를 순회하면서 진행하고,
@@ -92,7 +92,7 @@ Attention Weight를 곧바로 언어학적 설명으로 단정하지 않고,
 
 ## 3. Training Figures
 
-`study/training/04_visualize_training.py`를 실행하면
+`study/05_experiments/02_visualize_training_trace.py`를 실행하면
 `outputs/training_figures/`에 다음 그림을 저장합니다.
 
 - Held-out Probe / Test Loss vs Step
@@ -131,4 +131,4 @@ outputs/training_figures/
 ```
 
 `tiny_transformer_best.pt`는 test가 아니라 validation loss로 선택됩니다.
-test split은 `07_evaluate_trained_model.py`에서 마지막 성능 확인에 사용합니다.
+test split은 `study/04_full_training/03_evaluate.py`에서 마지막 성능 확인에 사용합니다.
