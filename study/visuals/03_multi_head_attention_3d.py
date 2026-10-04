@@ -142,6 +142,7 @@ def draw_relation_space(
         "tab:red",
         "Q_love",
         linewidth=3.2,
+        label_offset=(0.05, 0.06, 0.06),
     )
 
     for i in range(
@@ -152,9 +153,13 @@ def draw_relation_space(
         label = (
             "K_"
             + token
-            + "  score="
-            + f"{scores[query_index, i].item():.2f}"
         )
+
+        label_offsets = {
+            "I": (0.05, -0.08, -0.03),
+            "love": (0.06, 0.02, 0.03),
+            "robots": (-0.12, 0.06, 0.06),
+        }
 
         draw_vector(
             ax,
@@ -162,6 +167,7 @@ def draw_relation_space(
             K[i],
             token_colors[token],
             label,
+            label_offset=label_offsets[token],
         )
 
     style_3d_axis(
