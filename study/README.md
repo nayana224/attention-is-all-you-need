@@ -419,3 +419,47 @@ best checkpoint는 held-out test loss가 가장 낮은 epoch에서 저장합니�
 
 07에서는 teacher forcing 평가와 greedy decoding을 분리해서 봅니다.
 teacher-forced accuracy가 높아도 실제 autoregressive generation은 다를 수 있습니다.
+
+
+## Train / Validation / Test Split
+
+충분히 학습시키는 실습에서는 data 역할을 다음처럼 구분합니다.
+
+```text
+en_ko_train.csv
+= parameter 학습
+
+en_ko_val.csv
+= best epoch / checkpoint 선택
+= early stopping 판단
+
+en_ko_test.csv
+= 마지막 성능 확인
+= checkpoint 선택에는 사용하지 않음
+```
+
+현재 validation CSV는 train vocabulary 안의 token을 재조합한 10개 문장입니다.
+
+전체 학습 흐름:
+
+```bash
+python study/training/06_train_tiny_transformer.py
+python study/training/09_visualize_full_training.py
+python study/training/07_evaluate_trained_model.py
+python study/training/08_analyze_trained_model.py
+```
+
+06은 최대 300 epoch까지 학습하지만,
+validation loss가 연속 6회 평가 동안 개선되지 않으면 early stopping 합니다.
+
+09는 `full_training_history.csv`를 읽어서:
+
+- Train / Validation Loss
+- Train / Validation Token Accuracy
+- Best Validation Epoch
+
+를 한 장에 표시합니다.
+
+Matplotlib 한글은 시스템에 설치된
+Noto Sans CJK KR / Noto Sans KR / Nanum 계열 font를 자동 탐색합니다.
+해당 font가 없으면 plot은 생성되지만 한글 label이 네모로 보일 수 있습니다.
