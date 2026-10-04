@@ -4,7 +4,10 @@
 
 ```text
 basics/
-= Transformer 내부 블록을 작은 toy tensor로 분해해서 확인
+= Transformer 내부 블록을 작은 toy tensor로 분해해서 계산
+
+visuals/
+= 같은 개념을 2D / 3D vector 공간에서 시각적으로 확인
 
 training/
 = 실제 EN-KO 문자열을 넣어 forward → loss → backward → update를 확인
@@ -37,6 +40,12 @@ study/
 │   ├── 05_decoder.py
 │   └── 06_output_loss.py
 │
+├── visuals/
+│   ├── README.md
+│   ├── 01_embedding_pe_3d.py
+│   ├── 02_single_head_attention_3d.py
+│   └── 03_multi_head_attention_3d.py
+│
 ├── training/
 │   ├── 01_tokenization_dataset.py
 │   ├── 02_single_training_step.py
@@ -61,13 +70,64 @@ study/
 ├── outputs/
 │   ├── README.md
 │   ├── csv/
-│   └── figures/
+│   ├── visuals/
+│   └── training_figures/
 │
 ├── notebooks/
 │   └── Attention_Is_All_You_Need_Study.ipynb
 │
 └── images/
 ```
+
+## Visualization Track
+
+계산 흐름을 한 번 따라간 뒤에는 같은 Attention을 **벡터 공간의 움직임**으로 다시 봅니다.
+
+```text
+basics/
+계산을 따라감
+
+        ↓
+
+visuals/
+3D vector로 의미를 직관화
+
+        ↓
+
+training/
+실제 EN-KO 학습에서 값이 어떻게 변하는지 추적
+```
+
+추천 순서:
+
+```text
+visuals/01_embedding_pe_3d.py
+→ Embedding과 Position 정보
+
+visuals/02_single_head_attention_3d.py
+→ x → Q/K/V → Attention Weight → Weighted Sum of V
+
+visuals/03_multi_head_attention_3d.py
+→ 서로 다른 head가 서로 다른 projection 공간을 사용하는 모습
+```
+
+실행:
+
+```bash
+python study/visuals/01_embedding_pe_3d.py
+python study/visuals/02_single_head_attention_3d.py
+python study/visuals/03_multi_head_attention_3d.py
+```
+
+시각화 이미지는:
+
+```text
+study/outputs/visuals/
+```
+
+에 저장됩니다.
+
+> 3차원은 실제 Transformer의 차원이 아니라, 고차원 representation을 사람이 이해하기 위한 mental model입니다.
 
 ## Recommended Reading Order
 
@@ -204,7 +264,7 @@ training/04_visualize_training.py
 python study/training/04_visualize_training.py
 ```
 
-그래프는 `outputs/figures/`에 저장됩니다.
+그래프는 `outputs/training_figures/`에 저장됩니다.
 
 ## Code Style for Study
 
