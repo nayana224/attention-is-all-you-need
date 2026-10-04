@@ -7,6 +7,7 @@ import torch.nn as nn
 
 
 STUDY_DIR = Path(__file__).resolve().parents[1]
+
 sys.path.insert(
     0,
     str(STUDY_DIR),
@@ -31,6 +32,12 @@ TRAIN_PATH = (
     STUDY_DIR
     / "data"
     / "en_ko_train.csv"
+)
+
+VAL_PATH = (
+    STUDY_DIR
+    / "data"
+    / "en_ko_val.csv"
 )
 
 TEST_PATH = (
@@ -244,7 +251,10 @@ def evaluate_split(
 
     total_teacher_correct = 0
     total_teacher_tokens = 0
+
     greedy_exact_count = 0
+
+    loss_sum = 0.0
 
     for pair in pairs:
         example = make_example(
@@ -298,6 +308,11 @@ def evaluate_split(
             )
         )
 
+        loss_sum = (
+            loss_sum
+            + teacher_loss
+        )
+
         row = {
             "split":
                 split_name,
@@ -343,7 +358,20 @@ def evaluate_split(
         )
     )
 
+    mean_loss = (
+        loss_sum
+        / len(
+            pairs
+        )
+    )
+
     print()
+    print(
+        split_name,
+        "loss:",
+        f"{mean_loss:.4f}",
+    )
+
     print(
         split_name,
         "teacher-forced token accuracy:",
@@ -362,12 +390,47 @@ def evaluate_split(
 print("=" * 72)
 print("Evaluate Trained Tiny Transformer")
 print("=" * 72)
-print("checkpoint:")
-print(CHECKPOINT_PATH)
+
+print(
+    "checkpoint:"
+)
+
+print(
+    CHECKPOINT_PATH
+)
+
+print(
+    "selected at epoch:",
+    checkpoint[
+        "training"
+    ][
+        "epoch"
+    ],
+)
+
+print(
+    "selection split:",
+    checkpoint[
+        "training"
+    ].get(
+        "selection_split",
+        "unknown",
+    ),
+)
+
 
 train_rows = evaluate_split(
     "train",
     train_pairs,
+)
+
+val_pairs = load_translation_pairs(
+    VAL_PATH
+)
+
+val_rows = evaluate_split(
+    "validation",
+    val_pairs,
 )
 
 test_pairs = load_translation_pairs(
@@ -387,6 +450,11 @@ for row in train_rows:
         row
     )
 
+for row in val_rows:
+    all_rows.append(
+        row
+    )
+
 for row in test_rows:
     all_rows.append(
         row
@@ -397,7 +465,7 @@ with OUTPUT_PATH.open(
     "w",
     encoding="utf-8",
     newline="",
-) as f:
+) as file:
     fieldnames = [
         "split",
         "source",
@@ -410,7 +478,7 @@ with OUTPUT_PATH.open(
     ]
 
     writer = csv.DictWriter(
-        f,
+        file,
         fieldnames=fieldnames,
     )
 
@@ -423,33 +491,46 @@ with OUTPUT_PATH.open(
 
 
 print()
-print("Example test predictions")
+print("Final test predictions")
 print("-" * 72)
 
 for row in test_rows:
     print()
-    print("Source:")
+
+    print(
+        "Source:"
+    )
+
     print(
         row[
             "source"
         ]
     )
 
-    print("GT:")
+    print(
+        "GT:"
+    )
+
     print(
         row[
             "ground_truth"
         ]
     )
 
-    print("Teacher-forced:")
+    print(
+        "Teacher-forced:"
+    )
+
     print(
         row[
             "teacher_prediction"
         ]
     )
 
-    print("Greedy:")
+    print(
+        "Greedy:"
+    )
+
     print(
         row[
             "greedy_prediction"
@@ -457,5 +538,10 @@ for row in test_rows:
     )
 
 print()
-print("saved:")
-print(OUTPUT_PATH)
+print(
+    "saved:"
+)
+
+print(
+    OUTPUT_PATH
+)
