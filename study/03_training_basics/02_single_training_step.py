@@ -27,7 +27,7 @@ def print_section(title):
 
 
 # ==================================================
-# 0. Model / Data 준비
+# 0. 모델 / 데이터 준비
 # ==================================================
 
 (
@@ -84,9 +84,9 @@ print(example["gt_ids"])
 
 
 # ==================================================
-# 추적할 parameter 하나 선택
+# 추적할 파라미터 하나 선택
 #
-# Decoder masked self-attention
+# Decoder Masked Self-Attention
 # Head 1의 W_Q[0, 0] 하나를 추적한다.
 #
 # 목적:
@@ -114,12 +114,12 @@ weight_before = (
 
 
 # ==================================================
-# 1. Forward
+# 1. 순전파
 #
-# Encoder Input + Decoder Input
+# Encoder 입력 + Decoder 입력
 # -> Transformer
-# -> logits
-# -> probability
+# -> logit
+# -> 확률
 # ==================================================
 
 optimizer.zero_grad()
@@ -179,10 +179,10 @@ print(
 
 
 # ==================================================
-# 2. Loss
+# 2. Loss 계산
 #
-# 각 position에서 GT token의 probability를 확인하고
-# 전체 position의 Cross Entropy Loss를 계산한다.
+# 각 위치에서 GT 토큰의 확률을 확인하고
+# 전체 위치의 Cross Entropy Loss를 계산한다.
 # ==================================================
 
 gt_probabilities = []
@@ -251,10 +251,10 @@ print(
 
 
 # ==================================================
-# 3. Backward
+# 3. 역전파
 #
 # loss.backward()
-# -> 각 learnable parameter에 gradient가 계산된다.
+# -> 각 학습 파라미터에 gradient가 계산된다.
 # ==================================================
 
 loss.backward()
@@ -290,7 +290,7 @@ print(
 
 
 # ==================================================
-# 4. Optimizer Step
+# 4. Optimizer Step으로 파라미터 갱신
 #
 # SGD:
 # W_new = W_old - learning_rate * gradient
@@ -340,9 +340,9 @@ print(
 
 
 # ==================================================
-# 5. Update 후 Loss 다시 계산
+# 5. 업데이트 후 Loss 다시 계산
 #
-# optimizer.step() 후 같은 example을 다시 forward해서
+# optimizer.step() 후 같은 예제를 다시 순전파해서
 # loss가 어떻게 변했는지 확인한다.
 # ==================================================
 
