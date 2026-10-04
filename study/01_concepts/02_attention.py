@@ -16,19 +16,19 @@ torch.manual_seed(42)
 #
 # 이전 단계:
 #
-# token IDs
+# 토큰 IDs
 # -> Embedding
 # -> Embedding + Positional Encoding
 # -> x
 #
 # 여기서는 Attention 계산 자체에 집중하기 위해
-# x를 간단한 toy 값으로 고정한다.
+# x를 간단한 예제 값으로 고정한다.
 #
 # row 0 = I
-# row 1 = love
-# row 2 = robotics
+# 행 1 = love
+# 행 2 = robotics
 #
-# shape:
+# 텐서 크기:
 # [seq_len, d_model]
 # = [3, 4]
 # ==================================================
@@ -60,7 +60,7 @@ print("shape:", x.shape)
 #
 # 를 만든다.
 #
-# 각 Linear layer는 서로 다른 learnable parameter를 가진다.
+# 각 Linear layer는 서로 다른 학습 파라미터를 가진다.
 # ==================================================
 
 d_model = 4
@@ -195,7 +195,7 @@ print(
 #
 # I / love / robotics
 #
-# 각각의 key와 얼마나 compatible한지 계산한 값
+# 각각의 Key와 얼마나 잘 맞는지 계산한 값
 # ==================================================
 
 print("\n======================================")
@@ -222,7 +222,7 @@ print(
 # 5. 스케일링
 # ==================================================
 #
-# Scaled Dot-Product Attention:
+# 스케일드 닷프로덕트 어텐션:
 #
 # QK^T / sqrt(d_k)
 #
@@ -259,15 +259,15 @@ print(
 # 6. Softmax 정규화
 # ==================================================
 #
-# 각 query row마다 softmax를 적용한다.
+# 각 Query 행마다 Softmax를 적용한다.
 #
 # 결과:
 #
-# 각 query가
+# 각 Query가
 # I / love / robotics의 V를
-# 각각 얼마나 사용할 것인지 나타내는 weight
+# 각각 얼마나 사용할 것인지 나타내는 가중치
 #
-# 각 row의 합은 1.
+# 각 행의 합은 1이다.
 # ==================================================
 
 attention_weights = F.softmax(
@@ -331,7 +331,7 @@ print(
 # ) V
 #
 #
-# 첫 번째 output은:
+# 첫 번째 출력은:
 #
 # output_I
 #
