@@ -130,6 +130,7 @@ draw_vector(
     x[query_index],
     "black",
     "x_love",
+    label_offset=(0.05, -0.05, -0.04),
 )
 
 draw_vector(
@@ -138,6 +139,7 @@ draw_vector(
     Q[query_index],
     "tab:red",
     "Q_love",
+    label_offset=(0.06, 0.04, 0.05),
 )
 
 draw_vector(
@@ -146,6 +148,7 @@ draw_vector(
     K[query_index],
     "tab:purple",
     "K_love",
+    label_offset=(-0.16, 0.08, 0.02),
 )
 
 draw_vector(
@@ -154,6 +157,7 @@ draw_vector(
     V[query_index],
     "tab:brown",
     "V_love",
+    label_offset=(0.03, -0.08, 0.06),
 )
 
 style_3d_axis(
@@ -220,9 +224,13 @@ for i in range(
     label = (
         "K_"
         + token
-        + "  score="
-        + f"{query_scores[i].item():.2f}"
     )
+
+    label_offsets = {
+        "I": (0.05, -0.08, -0.03),
+        "love": (0.06, 0.02, 0.03),
+        "robots": (-0.10, 0.06, 0.06),
+    }
 
     draw_vector(
         ax,
@@ -230,6 +238,7 @@ for i in range(
         K[i],
         token_colors[token],
         label,
+        label_offset=label_offsets[token],
     )
 
 style_3d_axis(
@@ -390,12 +399,19 @@ for i in range(
         + token
     )
 
+    weighted_offsets = {
+        "I": (-0.02, -0.08, -0.02),
+        "love": (0.04, 0.04, 0.03),
+        "robots": (0.05, -0.02, 0.06),
+    }
+
     draw_vector(
         ax,
         current,
         next_point,
         token_colors[token],
         label,
+        label_offset=weighted_offsets[token],
     )
 
     current = next_point
@@ -411,6 +427,7 @@ draw_vector(
     "tab:red",
     "Attention Output",
     linewidth=3.4,
+    label_offset=(-0.18, 0.08, 0.08),
 )
 
 style_3d_axis(
