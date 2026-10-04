@@ -8,7 +8,7 @@ import torch.nn as nn
 # 1. 어휘 사전
 # ==================================================
 #
-# token ID
+# 토큰 ID
 #
 # 0 -> <PAD>
 # 1 -> I
@@ -26,7 +26,7 @@ d_model = 4
 #
 # "I love robotics"
 #
-# tokenization이 이미 끝났다고 가정한다.
+# 토큰화가 이미 끝났다고 가정한다.
 #
 # I         -> 1
 # love      -> 2
@@ -52,10 +52,10 @@ print("shape:", token_ids.shape)
 # ==================================================
 #
 # 실제 Transformer에서는 nn.Embedding의 값이
-# 학습되는 learnable parameter이다.
+# 학습되는 파라미터이다.
 #
 # 여기서는 손으로 연산을 확인하기 쉽도록
-# embedding 값을 직접 고정한다.
+# 임베딩 값을 직접 고정한다.
 # ==================================================
 
 embedding = nn.Embedding(
@@ -97,15 +97,15 @@ print(embedding.weight)
 # 4. 임베딩 조회
 # ==================================================
 #
-# token ID를 embedding table의 row index로 사용한다.
+# 토큰 ID를 embedding table의 row index로 사용한다.
 #
 # [1, 2, 3]
 #
 # ↓
 #
-# row 1
-# row 2
-# row 3
+# 행 1
+# 행 2
+# 행 3
 #
 # 를 가져온다.
 # ==================================================
@@ -169,7 +169,7 @@ print(
 # 6. 위치 정보
 # ==================================================
 #
-# token의 위치:
+# 토큰의 위치:
 #
 # I         -> position 0
 # love      -> position 1
@@ -203,7 +203,7 @@ print(position)
 #   = cos(pos / 10000^(2i / d_model))
 #
 # 코드에서는 동일한 식을 계산하기 위해
-# div_term을 먼저 만든다.
+# 먼저 div_term을 계산한다.
 # div_term = 1 / 10000^(2i / d_model)
 # ==================================================
 
@@ -232,7 +232,7 @@ print(div_term)
 
 # position * div_term
 #
-# sin / cos 안에 들어가는 실제 값
+# sin / cos에 들어가는 실제 값
 
 angles = (
     position * div_term
@@ -252,13 +252,13 @@ pe = torch.zeros(
 )
 
 
-# even dimension
+# 짝수 차원
 pe[:, 0::2] = torch.sin(
     angles
 )
 
 
-# odd dimension
+# 홀수 차원
 pe[:, 1::2] = torch.cos(
     angles
 )
@@ -282,9 +282,9 @@ print(
 #
 # x =
 #
-# scaled embedding
+# 스케일링된 임베딩
 # +
-# positional encoding
+# 위치 인코딩
 # ==================================================
 
 x = (
