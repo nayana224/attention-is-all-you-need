@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 import torch
 
 
@@ -249,3 +250,64 @@ def pca_project_to_3d(
     )
 
     return projected
+
+
+
+def configure_korean_font():
+    candidate_names = [
+        "Noto Sans CJK KR",
+        "Noto Sans KR",
+        "NanumGothic",
+        "NanumBarunGothic",
+        "Malgun Gothic",
+        "AppleGothic",
+    ]
+
+    font_paths = font_manager.findSystemFonts(
+        fontext="ttf"
+    )
+
+    otf_paths = font_manager.findSystemFonts(
+        fontext="otf"
+    )
+
+    for font_path in otf_paths:
+        font_paths.append(
+            font_path
+        )
+
+    for font_path in font_paths:
+        try:
+            font_name = (
+                font_manager
+                .FontProperties(
+                    fname=font_path
+                )
+                .get_name()
+            )
+        except Exception:
+            continue
+
+        for candidate_name in candidate_names:
+            if candidate_name in font_name:
+                plt.rcParams[
+                    "font.family"
+                ] = font_name
+
+                plt.rcParams[
+                    "axes.unicode_minus"
+                ] = False
+
+                print(
+                    "Matplotlib Korean font:",
+                    font_name,
+                )
+
+                return font_name
+
+    print(
+        "Korean font was not found. "
+        "Korean labels may appear as boxes."
+    )
+
+    return None
