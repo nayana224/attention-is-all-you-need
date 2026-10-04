@@ -109,6 +109,10 @@ visuals/02_single_head_attention_3d.py
 
 visuals/03_multi_head_attention_3d.py
 → 서로 다른 head가 서로 다른 projection 공간을 사용하는 모습
+
+training/05_visualize_learned_vectors.py
+→ 실제 TinyTransformer를 EN-KO pair로 SGD 학습한 뒤,
+  실제 embedding / cross-attention 변화를 3D로 투영해서 관찰
 ```
 
 실행:
@@ -117,6 +121,7 @@ visuals/03_multi_head_attention_3d.py
 python study/visuals/01_embedding_pe_3d.py
 python study/visuals/02_single_head_attention_3d.py
 python study/visuals/03_multi_head_attention_3d.py
+python study/training/05_visualize_learned_vectors.py
 ```
 
 시각화 이미지는:
@@ -325,3 +330,34 @@ tracing.py            값 기록 및 CSV 저장
 
 따라서 처음부터 `src/` 전체를 읽을 필요는 없습니다.
 현재 공부 순서에서 필요한 파일만 따라가면 됩니다.
+
+
+## Concept Visualization vs Actual Training Visualization
+
+두 종류의 그림을 구분해서 봅니다.
+
+```text
+study/visuals/
+= 개념을 이해하기 위한 설명용 toy vector
+= 사람이 보기 쉽게 3D로 직접 구성
+
+study/training/05_visualize_learned_vectors.py
+= 실제 study/src/TinyTransformer 사용
+= 실제 EN-KO train pair로 SGD 학습
+= 실제 d_model=8 representation을 PCA로 3D에 투영
+```
+
+실제 학습 시각화에서 생성되는 대표 그림:
+
+```text
+outputs/training_figures/
+├── 06_actual_training_loss.png
+├── 07_actual_probe_quality.png
+├── 08_actual_embedding_trajectory_pca3d.png
+├── 09_actual_cross_attention_vs_step.png
+└── 10_actual_final_cross_qk_pca3d.png
+```
+
+PCA 3D는 고차원 벡터를 사람이 보기 위해 투영한 것입니다.
+따라서 3D 그림의 각도나 거리를 실제 원본 공간과 완전히 동일하다고 해석하지 않습니다.
+Attention score 숫자는 원본 Q/K 차원에서 계산한 실제 값을 사용합니다.
