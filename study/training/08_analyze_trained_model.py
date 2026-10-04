@@ -24,6 +24,7 @@ sys.path.insert(
 )
 
 from plot_utils import (
+    configure_korean_font,
     pca_project_to_3d,
     save_figure,
 )
@@ -74,6 +75,8 @@ OUTPUT_DIR.mkdir(
 
 DEVICE = "cpu"
 PROBE_INDEX = 0
+
+configure_korean_font()
 
 
 checkpoint = torch.load(
