@@ -1,0 +1,231 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import torch
+
+
+TOKEN_COLORS = {
+    "I": "tab:blue",
+    "love": "tab:orange",
+    "robots": "tab:green",
+}
+
+
+def save_figure(
+    figure,
+    output_path,
+    dpi=180,
+):
+    output_path = Path(
+        output_path
+    )
+
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    figure.savefig(
+        output_path,
+        dpi=dpi,
+        bbox_inches="tight",
+        pad_inches=0.35,
+    )
+
+    plt.close(
+        figure
+    )
+
+
+def set_equal_axes(
+    axis,
+    points,
+    margin_ratio=0.18,
+):
+    points = points.detach().cpu()
+
+    mins = points.min(
+        dim=0
+    ).values
+
+    maxs = points.max(
+        dim=0
+    ).values
+
+    center = (
+        mins + maxs
+    ) / 2.0
+
+    span = (
+        maxs - mins
+    ).max().item()
+
+    if span < 0.5:
+        span = 0.5
+
+    radius = (
+        span / 2.0
+        * (1.0 + 2.0 * margin_ratio)
+    )
+
+    axis.set_xlim(
+        center[0].item() - radius,
+        center[0].item() + radius,
+    )
+
+    axis.set_ylim(
+        center[1].item() - radius,
+        center[1].item() + radius,
+    )
+
+    axis.set_zlim(
+        center[2].item() - radius,
+        center[2].item() + radius,
+    )
+
+    axis.set_box_aspect(
+        (1, 1, 1)
+    )
+
+
+def style_3d_axis(
+    axis,
+    title,
+):
+    axis.set_title(
+        title,
+        pad=18,
+    )
+
+    axis.set_xlabel(
+        "dim 0",
+        labelpad=8,
+    )
+
+    axis.set_ylabel(
+        "dim 1",
+        labelpad=8,
+    )
+
+    axis.set_zlabel(
+        "dim 2",
+        labelpad=8,
+    )
+
+    axis.scatter(
+        0.0,
+        0.0,
+        0.0,
+        color="black",
+        s=28,
+        zorder=5,
+    )
+
+    axis.text(
+        0.0,
+        0.0,
+        0.0,
+        "  O",
+        color="black",
+    )
+
+    axis.view_init(
+        elev=24,
+        azim=-58,
+    )
+
+
+def draw_vector(
+    axis,
+    start,
+    end,
+    color,
+    label=None,
+    linewidth=2.6,
+    label_offset=0.04,
+):
+    start = start.detach().cpu()
+    end = end.detach().cpu()
+
+    vector = (
+        end - start
+    )
+
+    axis.quiver(
+        start[0].item(),
+        start[1].item(),
+        start[2].item(),
+        vector[0].item(),
+        vector[1].item(),
+        vector[2].item(),
+        color=color,
+        arrow_length_ratio=0.08,
+        linewidth=linewidth,
+    )
+
+    axis.scatter(
+        end[0].item(),
+        end[1].item(),
+        end[2].item(),
+        color=color,
+        s=42,
+        zorder=6,
+    )
+
+    if label is not None:
+        axis.text(
+            end[0].item() + label_offset,
+            end[1].item() + label_offset,
+            end[2].item() + label_offset,
+            label,
+            color=color,
+            fontsize=10,
+        )
+
+
+def pca_project_to_3d(
+    vectors,
+):
+    vectors = vectors.detach().cpu()
+
+    mean = vectors.mean(
+        dim=0,
+        keepdim=True,
+    )
+
+    centered = (
+        vectors - mean
+    )
+
+    if centered.shape[1] <= 3:
+        if centered.shape[1] == 3:
+            return centered
+
+        padding = torch.zeros(
+            centered.shape[0],
+            3 - centered.shape[1],
+        )
+
+        return torch.cat(
+            [
+                centered,
+                padding,
+            ],
+            dim=1,
+        )
+
+    U, S, Vh = torch.linalg.svd(
+        centered,
+        full_matrices=False,
+    )
+
+    components = Vh[
+        :3
+    ].T
+
+    projected = (
+        centered
+        @ components
+    )
+
+    return projected
