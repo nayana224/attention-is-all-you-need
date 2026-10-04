@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 STUDY_DIR = Path(__file__).resolve().parents[1]
 CSV_DIR = STUDY_DIR / "outputs" / "csv"
-FIGURE_DIR = STUDY_DIR / "outputs" / "figures"
+FIGURE_DIR = STUDY_DIR / "outputs" / "training_figures"
 
 FIGURE_DIR.mkdir(
     parents=True,
