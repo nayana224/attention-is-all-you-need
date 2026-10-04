@@ -185,37 +185,41 @@ def draw_vector(
 
 def pca_project_to_3d(
     vectors,
+    center=True,
 ):
     vectors = vectors.detach().cpu()
 
-    mean = vectors.mean(
-        dim=0,
-        keepdim=True,
-    )
+    working_vectors = vectors
 
-    centered = (
-        vectors - mean
-    )
+    if center:
+        mean = vectors.mean(
+            dim=0,
+            keepdim=True,
+        )
 
-    if centered.shape[1] <= 3:
-        if centered.shape[1] == 3:
-            return centered
+        working_vectors = (
+            vectors - mean
+        )
+
+    if working_vectors.shape[1] <= 3:
+        if working_vectors.shape[1] == 3:
+            return working_vectors
 
         padding = torch.zeros(
-            centered.shape[0],
-            3 - centered.shape[1],
+            working_vectors.shape[0],
+            3 - working_vectors.shape[1],
         )
 
         return torch.cat(
             [
-                centered,
+                working_vectors,
                 padding,
             ],
             dim=1,
         )
 
     U, S, Vh = torch.linalg.svd(
-        centered,
+        working_vectors,
         full_matrices=False,
     )
 
@@ -224,7 +228,7 @@ def pca_project_to_3d(
     ].T
 
     projected = (
-        centered
+        working_vectors
         @ components
     )
 
