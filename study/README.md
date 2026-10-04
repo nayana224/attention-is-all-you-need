@@ -361,3 +361,61 @@ outputs/training_figures/
 PCA 3D는 고차원 벡터를 사람이 보기 위해 투영한 것입니다.
 따라서 3D 그림의 각도나 거리를 실제 원본 공간과 완전히 동일하다고 해석하지 않습니다.
 Attention score 숫자는 원본 Q/K 차원에서 계산한 실제 값을 사용합니다.
+
+
+## Full Training -> Evaluation -> Analysis
+
+학습 초반의 변화만 보는 03~05 다음에는,
+작은 EN-KO dataset을 충분히 학습시킨 뒤 결과를 분석합니다.
+
+```text
+training/06_train_tiny_transformer.py
+= 40개 train pair를 300 epoch 학습
+= Adam optimizer 사용
+= train/test loss와 token accuracy 기록
+= best/final checkpoint 저장
+
+training/07_evaluate_trained_model.py
+= best checkpoint 평가
+= teacher-forced token accuracy
+= 실제 inference 방식의 greedy autoregressive decoding
+= train/test prediction CSV 저장
+
+training/08_analyze_trained_model.py
+= 같은 probe에 대해 학습 전 vs 학습 후 비교
+= GT probability
+= Cross-Attention heatmap
+= source embedding shift(PCA 3D)
+```
+
+실행 순서:
+
+```bash
+python study/training/06_train_tiny_transformer.py
+python study/training/07_evaluate_trained_model.py
+python study/training/08_analyze_trained_model.py
+```
+
+생성 파일:
+
+```text
+outputs/checkpoints/
+├── tiny_transformer_best.pt
+└── tiny_transformer_final.pt
+
+outputs/csv/
+├── full_training_history.csv
+└── trained_model_evaluation.csv
+
+outputs/training_figures/
+├── 12_trained_gt_probability_before_after.png
+├── 13_trained_cross_attention_before_after.png
+└── 14_trained_embedding_before_after_pca3d.png
+```
+
+06은 기존의 SGD 한 step 관찰 실습과 목적이 다릅니다.
+충분히 학습된 작은 모델을 만들기 위해 Adam을 사용하고,
+best checkpoint는 held-out test loss가 가장 낮은 epoch에서 저장합니다.
+
+07에서는 teacher forcing 평가와 greedy decoding을 분리해서 봅니다.
+teacher-forced accuracy가 높아도 실제 autoregressive generation은 다를 수 있습니다.
