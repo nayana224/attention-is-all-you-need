@@ -7,6 +7,7 @@ import torch.nn as nn
 
 
 STUDY_DIR = Path(__file__).resolve().parents[1]
+
 sys.path.insert(
     0,
     str(STUDY_DIR),
@@ -28,10 +29,10 @@ TRAIN_PATH = (
     / "en_ko_train.csv"
 )
 
-TEST_PATH = (
+VAL_PATH = (
     STUDY_DIR
     / "data"
-    / "en_ko_test.csv"
+    / "en_ko_val.csv"
 )
 
 CHECKPOINT_DIR = (
@@ -66,8 +67,12 @@ D_FF = 16
 NUM_LAYERS = 1
 
 LEARNING_RATE = 0.01
-NUM_EPOCHS = 300
+
+MAX_EPOCHS = 300
 EVAL_EVERY = 10
+
+EARLY_STOPPING_PATIENCE = 6
+MIN_DELTA = 0.0001
 
 
 (
@@ -85,8 +90,8 @@ EVAL_EVERY = 10
     device=DEVICE,
 )
 
-test_pairs = load_translation_pairs(
-    TEST_PATH
+val_pairs = load_translation_pairs(
+    VAL_PATH
 )
 
 
@@ -105,9 +110,9 @@ for pair in train_pairs:
     )
 
 
-test_examples = []
+val_examples = []
 
-for pair in test_pairs:
+for pair in val_pairs:
     example = make_example(
         pair,
         src_vocab,
@@ -115,7 +120,7 @@ for pair in test_pairs:
         device=DEVICE,
     )
 
-    test_examples.append(
+    val_examples.append(
         example
     )
 
@@ -140,7 +145,9 @@ def evaluate_examples(
     with torch.no_grad():
         for example in examples:
             trace = model(
-                example["src_ids"],
+                example[
+                    "src_ids"
+                ],
                 example[
                     "decoder_input_ids"
                 ],
@@ -189,7 +196,9 @@ def evaluate_examples(
 
     mean_loss = (
         total_loss
-        / len(examples)
+        / len(
+            examples
+        )
     )
 
     token_accuracy = (
@@ -205,27 +214,60 @@ def evaluate_examples(
 
 history = []
 
-best_test_loss = float(
+best_val_loss = float(
     "inf"
 )
 
+best_val_accuracy = 0.0
 best_epoch = 0
+
+evaluations_without_improvement = 0
+stopped_epoch = MAX_EPOCHS
 
 
 print("=" * 72)
 print("Train Tiny Transformer")
 print("=" * 72)
-print("train pairs:", len(train_examples))
-print("test pairs :", len(test_examples))
-print("epochs     :", NUM_EPOCHS)
-print("optimizer  : Adam")
-print("lr         :", LEARNING_RATE)
-print()
 
+print(
+    "train pairs:",
+    len(
+        train_examples
+    ),
+)
+
+print(
+    "val pairs  :",
+    len(
+        val_examples
+    ),
+)
+
+print(
+    "max epochs :",
+    MAX_EPOCHS,
+)
+
+print(
+    "optimizer  : Adam"
+)
+
+print(
+    "lr         :",
+    LEARNING_RATE,
+)
+
+print(
+    "early stop :",
+    EARLY_STOPPING_PATIENCE,
+    "evaluations",
+)
+
+print()
 
 for epoch in range(
     1,
-    NUM_EPOCHS + 1,
+    MAX_EPOCHS + 1,
 ):
     model.train()
 
@@ -276,105 +318,148 @@ for epoch in range(
     if epoch % EVAL_EVERY == 0:
         should_evaluate = True
 
-    if epoch == NUM_EPOCHS:
+    if epoch == MAX_EPOCHS:
         should_evaluate = True
 
-    if should_evaluate:
-        (
+    if not should_evaluate:
+        continue
+
+    (
+        train_eval_loss,
+        train_accuracy,
+    ) = evaluate_examples(
+        train_examples
+    )
+
+    (
+        val_loss,
+        val_accuracy,
+    ) = evaluate_examples(
+        val_examples
+    )
+
+    improved = False
+
+    if val_loss < (
+        best_val_loss
+        - MIN_DELTA
+    ):
+        improved = True
+
+    row = {
+        "epoch":
+            epoch,
+        "train_epoch_loss":
+            mean_epoch_loss,
+        "train_eval_loss":
             train_eval_loss,
+        "train_token_accuracy":
             train_accuracy,
-        ) = evaluate_examples(
-            train_examples
+        "val_loss":
+            val_loss,
+        "val_token_accuracy":
+            val_accuracy,
+        "is_best":
+            int(
+                improved
+            ),
+    }
+
+    history.append(
+        row
+    )
+
+    print(
+        "epoch",
+        epoch,
+        "| train loss",
+        f"{train_eval_loss:.4f}",
+        "| train acc",
+        f"{train_accuracy:.3f}",
+        "| val loss",
+        f"{val_loss:.4f}",
+        "| val acc",
+        f"{val_accuracy:.3f}",
+    )
+
+    if improved:
+        best_val_loss = (
+            val_loss
         )
 
-        (
-            test_loss,
-            test_accuracy,
-        ) = evaluate_examples(
-            test_examples
+        best_val_accuracy = (
+            val_accuracy
         )
 
-        row = {
-            "epoch":
-                epoch,
-            "train_epoch_loss":
-                mean_epoch_loss,
-            "train_eval_loss":
-                train_eval_loss,
-            "train_token_accuracy":
-                train_accuracy,
-            "test_loss":
-                test_loss,
-            "test_token_accuracy":
-                test_accuracy,
+        best_epoch = epoch
+
+        evaluations_without_improvement = 0
+
+        checkpoint = {
+            "model_state_dict":
+                model.state_dict(),
+            "src_vocab":
+                src_vocab,
+            "tgt_vocab":
+                tgt_vocab,
+            "config": {
+                "d_model":
+                    D_MODEL,
+                "num_heads":
+                    NUM_HEADS,
+                "d_ff":
+                    D_FF,
+                "num_layers":
+                    NUM_LAYERS,
+                "seed":
+                    SEED,
+            },
+            "training": {
+                "epoch":
+                    epoch,
+                "learning_rate":
+                    LEARNING_RATE,
+                "optimizer":
+                    "Adam",
+                "selection_split":
+                    "validation",
+                "best_val_loss":
+                    best_val_loss,
+                "val_token_accuracy":
+                    best_val_accuracy,
+            },
         }
 
-        history.append(
-            row
+        best_path = (
+            CHECKPOINT_DIR
+            / "tiny_transformer_best.pt"
         )
 
+        torch.save(
+            checkpoint,
+            best_path,
+        )
+
+    else:
+        evaluations_without_improvement = (
+            evaluations_without_improvement
+            + 1
+        )
+
+    if evaluations_without_improvement >= (
+        EARLY_STOPPING_PATIENCE
+    ):
+        stopped_epoch = epoch
+
+        print()
         print(
-            "epoch",
-            epoch,
-            "| train loss",
-            f"{train_eval_loss:.4f}",
-            "| train acc",
-            f"{train_accuracy:.3f}",
-            "| test loss",
-            f"{test_loss:.4f}",
-            "| test acc",
-            f"{test_accuracy:.3f}",
+            "Early stopping:",
+            "validation loss did not improve for",
+            EARLY_STOPPING_PATIENCE,
+            "evaluations.",
         )
 
-        if test_loss < best_test_loss:
-            best_test_loss = (
-                test_loss
-            )
-
-            best_epoch = epoch
-
-            checkpoint = {
-                "model_state_dict":
-                    model.state_dict(),
-                "src_vocab":
-                    src_vocab,
-                "tgt_vocab":
-                    tgt_vocab,
-                "config": {
-                    "d_model":
-                        D_MODEL,
-                    "num_heads":
-                        NUM_HEADS,
-                    "d_ff":
-                        D_FF,
-                    "num_layers":
-                        NUM_LAYERS,
-                    "seed":
-                        SEED,
-                },
-                "training": {
-                    "epoch":
-                        epoch,
-                    "learning_rate":
-                        LEARNING_RATE,
-                    "optimizer":
-                        "Adam",
-                    "best_test_loss":
-                        best_test_loss,
-                    "test_token_accuracy":
-                        test_accuracy,
-                },
-            }
-
-            best_path = (
-                CHECKPOINT_DIR
-                / "tiny_transformer_best.pt"
-            )
-
-            torch.save(
-                checkpoint,
-                best_path,
-            )
+        break
 
 
 final_checkpoint = {
@@ -398,11 +483,13 @@ final_checkpoint = {
     },
     "training": {
         "epoch":
-            NUM_EPOCHS,
+            stopped_epoch,
         "learning_rate":
             LEARNING_RATE,
         "optimizer":
             "Adam",
+        "selection_split":
+            "validation",
     },
 }
 
@@ -426,18 +513,19 @@ with history_path.open(
     "w",
     encoding="utf-8",
     newline="",
-) as f:
+) as file:
     fieldnames = [
         "epoch",
         "train_epoch_loss",
         "train_eval_loss",
         "train_token_accuracy",
-        "test_loss",
-        "test_token_accuracy",
+        "val_loss",
+        "val_token_accuracy",
+        "is_best",
     ]
 
     writer = csv.DictWriter(
-        f,
+        file,
         fieldnames=fieldnames,
     )
 
@@ -453,14 +541,53 @@ print()
 print("=" * 72)
 print("Training finished")
 print("=" * 72)
-print("best epoch:", best_epoch)
-print("best test loss:", best_test_loss)
-print("best checkpoint:")
+
+print(
+    "best epoch:",
+    best_epoch,
+)
+
+print(
+    "best val loss:",
+    best_val_loss,
+)
+
+print(
+    "best val accuracy:",
+    best_val_accuracy,
+)
+
+print(
+    "stopped epoch:",
+    stopped_epoch,
+)
+
+print(
+    "best checkpoint:"
+)
+
 print(
     CHECKPOINT_DIR
     / "tiny_transformer_best.pt"
 )
-print("final checkpoint:")
-print(final_path)
-print("history:")
-print(history_path)
+
+print(
+    "final checkpoint:"
+)
+
+print(
+    final_path
+)
+
+print(
+    "history:"
+)
+
+print(
+    history_path
+)
+
+print()
+print(
+    "Test data was NOT used for checkpoint selection."
+)
