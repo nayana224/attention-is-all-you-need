@@ -39,6 +39,10 @@ from src.factory import (
     build_study_objects,
 )
 
+from src.tokenization import (
+    invert_vocab,
+)
+
 
 TRAIN_PATH = (
     STUDY_DIR
@@ -150,6 +154,10 @@ probe_example = test_examples[
 
 
 criterion = nn.CrossEntropyLoss()
+
+id_to_target = invert_vocab(
+    tgt_vocab
+)
 
 optimizer = torch.optim.SGD(
     model.parameters(),
@@ -289,6 +297,23 @@ def get_probe_snapshot(
             - 1
         )
 
+        pred_ids = probabilities.argmax(
+            dim=-1
+        )
+
+        pred_tokens = []
+
+        for token_id in pred_ids:
+            token_id_number = token_id.item()
+
+            token = id_to_target[
+                token_id_number
+            ]
+
+            pred_tokens.append(
+                token
+            )
+
         snapshot = {
             "step":
                 step,
@@ -296,6 +321,8 @@ def get_probe_snapshot(
                 probe_loss,
             "mean_gt_probability":
                 mean_gt_probability,
+            "pred_tokens":
+                pred_tokens,
             "src_embedding":
                 trace[
                     "src_embedding"
@@ -810,7 +837,203 @@ save_figure(
 
 
 # ==================================================
-# 7. Final actual Q/K relation
+# 7. Actual Cross-Attention Heatmap
+#    Before vs After Training
+# ==================================================
+
+before_snapshot = snapshots[
+    0
+]
+
+after_snapshot = snapshots[
+    -1
+]
+
+before_weights = before_snapshot[
+    "cross_weights"
+]
+
+after_weights = after_snapshot[
+    "cross_weights"
+]
+
+decoder_tokens = probe_example[
+    "decoder_input_tokens"
+]
+
+source_tokens = probe_example[
+    "src_tokens"
+]
+
+fig, axes = plt.subplots(
+    1,
+    2,
+    figsize=(13, 5.5),
+    constrained_layout=True,
+)
+
+images = []
+
+for axis_index in range(2):
+    if axis_index == 0:
+        weights = before_weights
+        title = "Before Training"
+    else:
+        weights = after_weights
+        title = "After Training"
+
+    image = axes[
+        axis_index
+    ].imshow(
+        weights.numpy(),
+        aspect="auto",
+        vmin=0.0,
+        vmax=1.0,
+    )
+
+    images.append(
+        image
+    )
+
+    axes[
+        axis_index
+    ].set_title(
+        title
+    )
+
+    axes[
+        axis_index
+    ].set_xticks(
+        range(
+            len(
+                source_tokens
+            )
+        )
+    )
+
+    axes[
+        axis_index
+    ].set_xticklabels(
+        source_tokens,
+        rotation=25,
+        ha="right",
+    )
+
+    axes[
+        axis_index
+    ].set_yticks(
+        range(
+            len(
+                decoder_tokens
+            )
+        )
+    )
+
+    axes[
+        axis_index
+    ].set_yticklabels(
+        decoder_tokens
+    )
+
+    axes[
+        axis_index
+    ].set_xlabel(
+        "Encoder Key Token"
+    )
+
+    axes[
+        axis_index
+    ].set_ylabel(
+        "Decoder Query Token"
+    )
+
+    for row_index in range(
+        weights.shape[0]
+    ):
+        for column_index in range(
+            weights.shape[1]
+        ):
+            value = weights[
+                row_index,
+                column_index,
+            ].item()
+
+            axes[
+                axis_index
+            ].text(
+                column_index,
+                row_index,
+                f"{value:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+            )
+
+fig.suptitle(
+    "Actual Decoder Cross-Attention: Head 1"
+)
+
+fig.colorbar(
+    images[-1],
+    ax=axes,
+    shrink=0.82,
+    label="Attention Weight",
+)
+
+heatmap_path = (
+    OUTPUT_DIR
+    / "10_actual_cross_attention_before_after.png"
+)
+
+save_figure(
+    fig,
+    heatmap_path,
+)
+
+
+# ==================================================
+# 8. Prediction Before / After Training
+# ==================================================
+
+print()
+print("=" * 72)
+print("Prediction Before / After")
+print("=" * 72)
+
+print("Source:")
+print(
+    probe_example[
+        "source_text"
+    ]
+)
+
+print()
+print("Ground Truth:")
+print(
+    probe_example[
+        "gt_tokens"
+    ]
+)
+
+print()
+print("Before Training:")
+print(
+    before_snapshot[
+        "pred_tokens"
+    ]
+)
+
+print()
+print("After Training:")
+print(
+    after_snapshot[
+        "pred_tokens"
+    ]
+)
+
+
+# ==================================================
+# 9. Final actual Q/K relation
 # ==================================================
 #
 # Head 1의 실제 Q/K는 4차원이다.
@@ -924,7 +1147,7 @@ set_equal_axes(
 
 qk_path = (
     OUTPUT_DIR
-    / "10_actual_final_cross_qk_pca3d.png"
+    / "11_actual_final_cross_qk_pca3d.png"
 )
 
 save_figure(
@@ -942,6 +1165,7 @@ for path in [
     probe_path,
     embedding_path,
     attention_path,
+    heatmap_path,
     qk_path,
 ]:
     print(path)
