@@ -3,8 +3,14 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+
+from plot_utils import (
+    draw_vector,
+    save_figure,
+    set_equal_axes,
+    style_3d_axis,
+)
 
 
 STUDY_DIR = Path(__file__).resolve().parents[1]
@@ -15,111 +21,72 @@ OUTPUT_DIR.mkdir(
     exist_ok=True,
 )
 
-torch.manual_seed(42)
-
-
-# ==================================================
-# 0. Multi-Head Visualization Setup
-# ==================================================
-#
-# Head 하나를 3D로 직접 볼 수 있게:
-#
-# d_model = 6
-# num_heads = 2
-# d_k = d_v = 3
-#
-# 로 구성한다.
-# ==================================================
-
 tokens = [
     "I",
     "love",
     "robots",
 ]
 
-x = torch.tensor([
-    [1.0, 0.2, 0.1, 0.4, 0.0, 0.2],
-    [0.2, 1.0, 0.3, 0.1, 0.7, 0.1],
-    [0.3, 0.2, 1.0, 0.2, 0.1, 0.8],
+token_colors = {
+    "I": "tab:blue",
+    "love": "tab:orange",
+    "robots": "tab:green",
+}
+
+origin = torch.zeros(3)
+query_index = 1
+
+# 설명을 위한 toy projected vectors.
+# 실제 학습 결과는 training/05_visualize_learned_vectors.py에서 본다.
+Q1 = torch.tensor([
+    [0.2, 0.0, 0.1],
+    [0.2, 0.1, 1.0],
+    [0.1, 0.0, 1.1],
 ])
 
-d_model = 6
-num_heads = 2
+K1 = torch.tensor([
+    [0.8, 0.0, 0.1],
+    [0.1, 0.1, 0.2],
+    [0.0, 0.0, 1.0],
+])
 
-d_k = (
-    d_model
-    // num_heads
-)
+V1 = torch.tensor([
+    [-0.6, 0.2, 0.0],
+    [0.2, 0.8, 0.2],
+    [0.8, 0.1, 1.0],
+])
 
-d_v = d_k
+Q2 = torch.tensor([
+    [1.0, 0.2, 0.0],
+    [1.1, 0.1, 0.0],
+    [0.8, 0.1, 0.1],
+])
 
+K2 = torch.tensor([
+    [1.0, 0.0, 0.0],
+    [0.2, 0.1, 0.0],
+    [0.0, 0.2, 0.1],
+])
 
-# ==================================================
-# 1. Head layers
-# ==================================================
-
-head_1_W_Q = nn.Linear(
-    d_model,
-    d_k,
-    bias=False,
-)
-
-head_1_W_K = nn.Linear(
-    d_model,
-    d_k,
-    bias=False,
-)
-
-head_1_W_V = nn.Linear(
-    d_model,
-    d_v,
-    bias=False,
-)
-
-head_2_W_Q = nn.Linear(
-    d_model,
-    d_k,
-    bias=False,
-)
-
-head_2_W_K = nn.Linear(
-    d_model,
-    d_k,
-    bias=False,
-)
-
-head_2_W_V = nn.Linear(
-    d_model,
-    d_v,
-    bias=False,
-)
+V2 = torch.tensor([
+    [-0.9, 0.0, 0.1],
+    [0.2, 0.6, 0.2],
+    [0.4, 0.1, 0.8],
+])
 
 
-def run_head(
-    input_x,
-    W_Q,
-    W_K,
-    W_V,
+def run_attention(
+    Q,
+    K,
+    V,
 ):
-    Q = W_Q(
-        input_x
-    )
-
-    K = W_K(
-        input_x
-    )
-
-    V = W_V(
-        input_x
-    )
-
     scores = (
         Q @ K.T
     )
 
     scaled_scores = (
         scores
-        / math.sqrt(d_k)
+        / math.sqrt(3)
     )
 
     weights = F.softmax(
@@ -132,198 +99,125 @@ def run_head(
     )
 
     return (
-        Q,
-        K,
-        V,
+        scaled_scores,
         weights,
         output,
     )
 
 
-(
+scores1, weights1, output1 = run_attention(
     Q1,
     K1,
     V1,
-    weights1,
-    output1,
-) = run_head(
-    x,
-    head_1_W_Q,
-    head_1_W_K,
-    head_1_W_V,
 )
 
-(
+scores2, weights2, output2 = run_attention(
     Q2,
     K2,
     V2,
-    weights2,
-    output2,
-) = run_head(
-    x,
-    head_2_W_Q,
-    head_2_W_K,
-    head_2_W_V,
 )
 
 
-# ==================================================
-# 2. Concatenate and W_O
-# ==================================================
-
-concat = torch.cat(
-    [
-        output1,
-        output2,
-    ],
-    dim=-1,
-)
-
-W_O = nn.Linear(
-    d_model,
-    d_model,
-    bias=False,
-)
-
-final_output = W_O(
-    concat
-)
-
-
-print("=" * 70)
-print("Multi-Head Attention Visualization")
-print("=" * 70)
-
-print()
-print("Head 1 weights:")
-print(weights1)
-
-print()
-print("Head 2 weights:")
-print(weights2)
-
-print()
-print("Head 1 output:")
-print(output1)
-
-print()
-print("Head 2 output:")
-print(output2)
-
-print()
-print("Concatenated:")
-print(concat)
-
-print()
-print("Final output:")
-print(final_output)
-
-
-# ==================================================
-# 3. 3D vector helper
-# ==================================================
-
-def draw_vectors(
-    axis,
-    vectors,
-    labels,
+def draw_relation_space(
+    Q,
+    K,
+    scores,
     title,
+    filename,
 ):
+    fig = plt.figure(
+        figsize=(8, 7),
+        constrained_layout=True,
+    )
+
+    ax = fig.add_subplot(
+        111,
+        projection="3d",
+    )
+
+    draw_vector(
+        ax,
+        origin,
+        Q[query_index],
+        "tab:red",
+        "Q_love",
+        linewidth=3.2,
+    )
+
     for i in range(
-        len(labels)
+        len(tokens)
     ):
-        vector = vectors[i]
+        token = tokens[i]
 
-        x_value = vector[0].item()
-        y_value = vector[1].item()
-        z_value = vector[2].item()
-
-        axis.quiver(
-            0.0,
-            0.0,
-            0.0,
-            x_value,
-            y_value,
-            z_value,
-            arrow_length_ratio=0.08,
+        label = (
+            "K_"
+            + token
+            + "  score="
+            + f"{scores[query_index, i].item():.2f}"
         )
 
-        axis.text(
-            x_value,
-            y_value,
-            z_value,
-            labels[i],
+        draw_vector(
+            ax,
+            origin,
+            K[i],
+            token_colors[token],
+            label,
         )
 
-    axis.set_title(
-        title
+    style_3d_axis(
+        ax,
+        title,
     )
 
-    axis.set_xlabel(
-        "dim 0"
+    points = torch.cat(
+        [
+            origin.unsqueeze(0),
+            Q[query_index].unsqueeze(0),
+            K,
+        ],
+        dim=0,
     )
 
-    axis.set_ylabel(
-        "dim 1"
+    set_equal_axes(
+        ax,
+        points,
+        margin_ratio=0.42,
     )
 
-    axis.set_zlabel(
-        "dim 2"
+    path = (
+        OUTPUT_DIR
+        / filename
     )
 
+    save_figure(
+        fig,
+        path,
+    )
 
-# ==================================================
-# 4. Compare Head 1 / Head 2 Q spaces
-# ==================================================
+    return path
 
-fig = plt.figure(
-    figsize=(12, 5)
-)
 
-ax1 = fig.add_subplot(
-    121,
-    projection="3d",
-)
-
-ax2 = fig.add_subplot(
-    122,
-    projection="3d",
-)
-
-draw_vectors(
-    ax1,
+path_1 = draw_relation_space(
     Q1,
-    tokens,
-    "Head 1 - Query Space",
+    K1,
+    scores1,
+    "Head 1 relation space",
+    "07_head1_relation_space.png",
 )
 
-draw_vectors(
-    ax2,
+path_2 = draw_relation_space(
     Q2,
-    tokens,
-    "Head 2 - Query Space",
+    K2,
+    scores2,
+    "Head 2 relation space",
+    "08_head2_relation_space.png",
 )
 
-query_path = (
-    OUTPUT_DIR
-    / "05_multihead_query_spaces_3d.png"
+
+fig, ax = plt.subplots(
+    figsize=(8.5, 4.8),
+    constrained_layout=True,
 )
-
-plt.tight_layout()
-
-plt.savefig(
-    query_path,
-    dpi=160,
-)
-
-plt.close()
-
-
-# ==================================================
-# 5. Compare Attention Weights
-# ==================================================
-
-query_index = 1
 
 x_positions = torch.arange(
     len(tokens)
@@ -331,76 +225,84 @@ x_positions = torch.arange(
 
 bar_width = 0.35
 
-plt.figure(
-    figsize=(8, 4)
-)
-
-plt.bar(
-    x_positions - bar_width / 2,
+bars_1 = ax.bar(
+    x_positions
+    - bar_width / 2.0,
     weights1[
         query_index
-    ].detach().numpy(),
+    ].numpy(),
     width=bar_width,
     label="Head 1",
 )
 
-plt.bar(
-    x_positions + bar_width / 2,
+bars_2 = ax.bar(
+    x_positions
+    + bar_width / 2.0,
     weights2[
         query_index
-    ].detach().numpy(),
+    ].numpy(),
     width=bar_width,
     label="Head 2",
 )
 
-plt.xticks(
-    x_positions,
-    tokens,
+ax.set_xticks(
+    x_positions
 )
 
-plt.ylim(
+ax.set_xticklabels(
+    tokens
+)
+
+ax.set_ylim(
     0.0,
     1.0,
 )
 
-plt.title(
-    "Different Heads, Different Attention Weights"
+ax.set_title(
+    "Different heads, different attention weights"
 )
 
-plt.xlabel(
+ax.set_xlabel(
     "Key Token"
 )
 
-plt.ylabel(
+ax.set_ylabel(
     "Attention Weight"
 )
 
-plt.legend()
-plt.grid(
-    axis="y"
+ax.legend()
+
+ax.grid(
+    axis="y",
+    alpha=0.35,
 )
 
-weight_path = (
+for bar in list(bars_1) + list(bars_2):
+    height = bar.get_height()
+
+    ax.text(
+        bar.get_x()
+        + bar.get_width() / 2.0,
+        height,
+        f"{height:.2f}",
+        ha="center",
+        va="bottom",
+    )
+
+path_3 = (
     OUTPUT_DIR
-    / "06_multihead_weights_love.png"
+    / "09_multihead_attention_weights.png"
 )
 
-plt.tight_layout()
-
-plt.savefig(
-    weight_path,
-    dpi=160,
+save_figure(
+    fig,
+    path_3,
 )
 
-plt.close()
-
-
-# ==================================================
-# 6. Compare Head outputs in each 3D space
-# ==================================================
 
 fig = plt.figure(
-    figsize=(12, 5)
+    figsize=(12, 5.8),
+    constrained_layout=True,
 )
 
 ax1 = fig.add_subplot(
@@ -413,37 +315,67 @@ ax2 = fig.add_subplot(
     projection="3d",
 )
 
-draw_vectors(
+draw_vector(
     ax1,
-    output1,
-    tokens,
-    "Head 1 Output",
+    origin,
+    output1[query_index],
+    "tab:purple",
+    "Head 1 output",
+    linewidth=3.0,
 )
 
-draw_vectors(
+draw_vector(
     ax2,
-    output2,
-    tokens,
-    "Head 2 Output",
+    origin,
+    output2[query_index],
+    "tab:brown",
+    "Head 2 output",
+    linewidth=3.0,
 )
 
-output_path = (
+style_3d_axis(
+    ax1,
+    "Head 1 output",
+)
+
+style_3d_axis(
+    ax2,
+    "Head 2 output",
+)
+
+output_points = torch.stack(
+    [
+        origin,
+        output1[query_index],
+        output2[query_index],
+    ],
+    dim=0,
+)
+
+set_equal_axes(
+    ax1,
+    output_points,
+    margin_ratio=0.5,
+)
+
+set_equal_axes(
+    ax2,
+    output_points,
+    margin_ratio=0.5,
+)
+
+path_4 = (
     OUTPUT_DIR
-    / "07_multihead_outputs_3d.png"
+    / "10_multihead_output_vectors.png"
 )
 
-plt.tight_layout()
-
-plt.savefig(
-    output_path,
-    dpi=160,
+save_figure(
+    fig,
+    path_4,
 )
 
-plt.close()
-
-
-print()
 print("saved:")
-print(query_path)
-print(weight_path)
-print(output_path)
+print(path_1)
+print(path_2)
+print(path_3)
+print(path_4)
