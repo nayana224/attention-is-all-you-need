@@ -9,7 +9,7 @@ import torch.nn.functional as F
 # 0. 재현성
 # ==================================================
 #
-# nn.Linear의 random initialization을
+# nn.Linear의 랜덤 초기화를
 # 매 실행마다 동일하게 만든다.
 # ==================================================
 
@@ -20,13 +20,13 @@ torch.manual_seed(42)
 # 1. Transformer Input x
 # ==================================================
 #
-# 이전 단계와 동일한 toy input을 사용한다.
+# 이전 단계와 동일한 예제 입력을 사용한다.
 #
 # row 0 = I
-# row 1 = love
-# row 2 = robotics
+# 행 1 = love
+# 행 2 = robotics
 #
-# shape:
+# 텐서 크기:
 #
 # [seq_len, d_model]
 # = [3, 4]
@@ -92,9 +92,9 @@ print("d_v       :", d_v)
 # K1 = x W_K1
 # V1 = x W_V1
 #
-# 로 projection한다.
+# 로 선형 투영한다.
 #
-# PyTorch nn.Linear:
+# PyTorch nn.Linear 계산:
 #
 # y = x @ weight.T
 #
@@ -159,8 +159,8 @@ print("shape:", V1.shape)
 # 4. Head 2 투영
 # ==================================================
 #
-# Head 2는 같은 x를 보지만
-# 완전히 다른 parameter를 사용한다.
+# Head 2는 같은 x를 입력으로 받지만
+# 완전히 다른 파라미터를 사용한다.
 #
 # Q2 = x W_Q2
 # K2 = x W_K2
@@ -239,14 +239,14 @@ print("shape:", V2.shape)
 def scaled_dot_product_attention(Q, K, V):
 
     # ----------------------------------------------
-    # 1) Query-Key compatibility
+    # 1) Query-Key 관계 점수
     # ----------------------------------------------
 
     scores = Q @ K.T
 
 
     # ----------------------------------------------
-    # 2) Scaling
+    # 2) 스케일링
     # ----------------------------------------------
 
     scaled_scores = (
@@ -255,7 +255,7 @@ def scaled_dot_product_attention(Q, K, V):
 
 
     # ----------------------------------------------
-    # 3) Softmax
+    # 3) Softmax 정규화
     # ----------------------------------------------
 
     attention_weights = F.softmax(
@@ -265,7 +265,7 @@ def scaled_dot_product_attention(Q, K, V):
 
 
     # ----------------------------------------------
-    # 4) Weighted Sum of V
+    # 4) V의 가중합
     # ----------------------------------------------
 
     output = (
@@ -326,7 +326,7 @@ print(
 # 7. Head 1에서 I token을 직접 해석
 # ==================================================
 #
-# 첫 번째 query = I
+# 첫 번째 Query = I
 #
 # weights1[0]:
 #
@@ -335,13 +335,13 @@ print(
 # I -> robotics
 #
 #
-# 그 weight로:
+# 그 가중치로:
 #
 # V1_I
 # V1_love
 # V1_robotics
 #
-# 를 weighted sum한다.
+# 를 가중합한다.
 # ==================================================
 
 print("\n======================================")
@@ -470,9 +470,9 @@ print(head2)
 # [3, 4]
 #
 #
-# token별로:
+# 토큰별로:
 #
-# [Head1 features | Head2 features]
+# [Head1 특징 | Head2 특징]
 #
 # 를 붙인다.
 # ==================================================
@@ -502,10 +502,10 @@ print(
 # 11. 최종 투영 W_O
 # ==================================================
 #
-# 여러 head의 representation을 concat한 후
+# 여러 Head의 표현을 이어 붙인 후
 #
 # W_O를 통해 다시 d_model 차원의
-# representation으로 섞는다.
+# 표현으로 다시 섞는다.
 #
 #
 # [3, 4]
